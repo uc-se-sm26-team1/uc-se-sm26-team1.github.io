@@ -27,7 +27,10 @@ if(!chatMessageInput) {
 }
 // AC-01.2 (UI): pressing Enter also triggers sendMessage()
 chatMessageInput.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') sendMessage();
+  if (e.key === 'Enter'){
+    e.preventDefault();
+    sendMessage();
+  }
 });
 
 // =============================================================================
@@ -35,11 +38,11 @@ chatMessageInput.addEventListener('keypress', function(e) {
 // =============================================================================
 
 function sendMessage() {
-    var message = chatMessageInput.value.trim();
+    var message = chatMessageInput.innerText.trim();
     if (!message) return;   // AC-02.2: empty messages are ignored
     console.log(`Debug>Chat message: ${message}`); //for UI testing only
     socket.emit('message', message);// other AC will be implemented
-    chatMessageInput.value = ''; // AC-01.5: clear input after sending
+    chatMessageInput.innerHTML = ''; // AC-01.5: clear input after sending
     chatMessageInput.focus();
 }
 
