@@ -74,3 +74,16 @@ socket.on('status', function(data) {
     //AC-02.3 UI: auto scroll to the latest message
     statusElm.scrollTop = statusElm.scrollHeight;
   });
+
+  function JoinChat(){
+    const username = document.getElementById('username').value;
+    const pattern = /^\w{3,20}$/;
+    if(!username || !pattern.test(username)){
+      alert("Username cannot be empty and must be between 3-20 characters long");
+      return;
+    }
+    document.getElementById('loginUI').style.display = 'none';
+    document.getElementById('chatUI').style.display = '';
+    socket.emit('joinedUser', username);
+  }
+  document.getElementById('joinBtn').addEventListener('click', JoinChat)

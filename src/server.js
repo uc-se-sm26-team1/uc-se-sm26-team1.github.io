@@ -21,12 +21,14 @@ const userlist = new Map();
 io.on('connection', (socket) => {
 
   // Auto-assign a unique username from the socket ID
-  const username = 'User_' + socket.id.slice(-5);
-  userlist.set(socket.id, username);
-  console.log('New client connected - socket ID: ' + socket.id )
+  //const username = 'User_' + socket.id.slice(-5);
+  socket.on('joinedUser', (username) => {
+    userlist.set(socket.id, username);
+    console.log('New client connected - socket ID: ' + socket.id )
+    io.emit('status', username + ' joined the chat. Number of connected clients: ' + userlist.size);
+  });
 
   //Todo: UC-02 (AC-02.1): notify all connected clients that a new user joined
-  io.emit('status', username + ' joined the chat. Number of connected clients: ' + userlist.size);
   // ---------------------------------------------------------------------------
   // Use-Case-01: Send message
   //

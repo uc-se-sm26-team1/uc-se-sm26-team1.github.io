@@ -7,24 +7,29 @@
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-
-<h1>Simple Messenger — EECE/CS 3093C Lab 1</h1>
-<h3>Team 1 Demo 0.1.0</h3>
-<br>
-<div>
-  Chat message:
-  <div id="chat-message" contenteditable="true" style="width:450px; border:1px solid black; padding: 5px 5px;" ></div>  
-  <div class="tool-bar" style="padding: 5px 0px;">
-    <button id="link-button">link</button>
-    <button id="send-button">Send</button>
+  <h1>Simple Messenger — EECE/CS 3093C Lab 1</h1>
+  <h3>Team 1 Demo 0.1.0</h3>
+  <br>
+  <div id="loginUI" >
+    <input type="text" id="username" placeholder="Username">
+    <button class="button" id="joinBtn">Join Chat</button>
   </div>
+<div id="chatUI" style="display: none;">
+  <div>
+    Chat message:
+    <div id="chat-message" contenteditable="true" style="width:450px; border:1px solid black; padding: 5px 5px;" ></div>  
+    <div class="tool-bar" style="padding: 5px 0px;">
+      <button id="link-button">link</button>
+      <button id="send-button">Send</button>
+    </div>
+  </div>
+  <br>
+  <b>System Status</b><br>
+  <div id="status" style="width: 625px; height: 75px; overflow-y: scroll;"></div>
+  <b>Chat Responses</b><br>
+  <div id="responses"></div>
+  <!--new UI elements to be implemented-->
+  <script src="client.js"></script>
 </div>
-<br>
-<b>System Status</b><br>
-<div id="status" style="width: 625px; height: 75px; overflow-y: scroll;"></div>
-<b>Chat Responses</b><br>
-<div id="responses"></div>
-<!--new UI elements to be implemented-->
-<script src="client.js"></script>
 </body>
 </html>
