@@ -33,17 +33,22 @@ chatMessageInput.addEventListener('keypress', function(e) {
   }
 });
 
+chatMessageInput.addEventListener('input', refreshComposerLinks);
+
 // =============================================================================
 // Use-Case-01: Send Message
 // =============================================================================
 
 function sendMessage() {
-    var message = chatMessageInput.innerText.trim();
-    if (!message) return;   // AC-02.2: empty messages are ignored
-    console.log(`Debug>Chat message: ${message}`); //for UI testing only
-    socket.emit('message', message);// other AC will be implemented
-    chatMessageInput.innerHTML = ''; // AC-01.5: clear input after sending
-    chatMessageInput.focus();
+  linkifyElement(chatMessageInput);
+  var messageText = chatMessageInput.innerText.trim();
+  if (!messageText) return;   // AC-02.2: empty messages are ignored
+
+  var message = chatMessageInput.innerHTML.trim();
+  console.log(`Debug>Chat message: ${message}`); //for UI testing only
+  socket.emit('message', message);// other AC will be implemented
+  chatMessageInput.innerHTML = ''; // AC-01.5: clear input after sending
+  chatMessageInput.focus();
 }
 
 // =============================================================================
@@ -61,6 +66,7 @@ function displayMessage(data){
     //AC-02.2: shows timestamp for each message
     var timeStamp = new Date().toLocaleTimeString();
     d.innerHTML ='['+ timeStamp +'] ' + data;
+    linkifyElement(d);
     document.getElementById('responses').appendChild(d);
 }
 // AC-02.3 (UI): auto-scroll to the latest message
@@ -101,3 +107,75 @@ data.forEach(user => {
 });
 
 })
+
+//helper functions for links
+
+function refreshComposerLinks(e) {
+  var caretPosition = getCaretPosition(chatMessageInput);
+  var isDelete = e && e.inputType && e.inputType.indexOf('delete') === 0;
+
+  if (!isDelete) {
+      updateExistingLinkHrefs(chatMessageInput);
+  }
+
+  linkifyElement(chatMessageInput);
+  setCaretPosition(chatMessageInput, caretPosition);
+}
+
+function linkifyElement(root) {
+  var textNodes = [];
+  var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(node) {
+          if (node.parentElement && node.parentElement.closest('a')) {
+              return NodeFilter.FILTER_REJECT;
+          }
+
+          return /https?:\/\/[^\s<]+/.test(node.nodeValue)
+              ? NodeFilter.FILTER_ACCEPT
+              : NodeFilter.FILTER_REJECT;
+      }
+  });
+
+  while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+  }
+
+  textNodes.forEach(linkifyTextNode);
+}
+
+function linkifyTextNode(textNode) {
+  var text = textNode.nodeValue;
+  var urlRegex = /https?:\/\/[^\s<]+/g;
+  var fragment = document.createDocumentFragment();
+  var lastIndex = 0;
+  var match;
+
+  while ((match = urlRegex.exec(text)) !== null) {
+      var url = match[0];
+
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+
+      var link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.innerText = url;
+      fragment.appendChild(link);
+
+      lastIndex = match.index + url.length;
+  }
+
+  fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  textNode.parentNode.replaceChild(fragment, textNode);
+}
+
+function updateExistingLinkHrefs(root) {
+  var links = root.querySelectorAll('a');
+
+  links.forEach(function(link) {
+    var visibleText = link.innerText.trim();
+
+    if (/^https?:\/\/[^\s<]+$/.test(visibleText)) {
+        link.href = visibleText;
+    }
+  });
+}
