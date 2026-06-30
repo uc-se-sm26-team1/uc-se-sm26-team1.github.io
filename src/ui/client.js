@@ -33,16 +33,20 @@ chatMessageInput.addEventListener('keypress', function(e) {
   }
 });
 
+var linkifyTimer;
 chatMessageInput.addEventListener('input', refreshComposerLinks);
+chatMessageInput.addEventListener('click', openComposerLink);
 
 // =============================================================================
 // Use-Case-01: Send Message
 // =============================================================================
 
 function sendMessage() {
-  linkifyElement(chatMessageInput);
   var messageText = chatMessageInput.innerText.trim();
   if (!messageText) return;   // AC-02.2: empty messages are ignored
+
+  clearTimeout(linkifyTimer);
+  linkifyComposer(false);
 
   var message = chatMessageInput.innerHTML.trim();
   console.log(`Debug>Chat message: ${message}`); //for UI testing only
@@ -66,7 +70,6 @@ function displayMessage(data){
     //AC-02.2: shows timestamp for each message
     var timeStamp = new Date().toLocaleTimeString();
     d.innerHTML ='['+ timeStamp +'] ' + data;
-    linkifyElement(d);
     document.getElementById('responses').appendChild(d);
 }
 // AC-02.3 (UI): auto-scroll to the latest message
@@ -111,61 +114,54 @@ data.forEach(user => {
 //helper functions for links
 
 function refreshComposerLinks(e) {
-  var caretPosition = getCaretPosition(chatMessageInput);
   var isDelete = e && e.inputType && e.inputType.indexOf('delete') === 0;
+  var isPaste = e && e.inputType === 'insertFromPaste';
+  var delay = isPaste || isDelete ? 0 : 500;
 
+  clearTimeout(linkifyTimer);
+
+  linkifyTimer = setTimeout(function() {
+    linkifyComposer(isDelete, isPaste);
+  }, delay);
+}
+
+function linkifyComposer(isDelete, allowEndOfText) {
   if (!isDelete) {
-      updateExistingLinkHrefs(chatMessageInput);
+    updateExistingLinkHrefs(chatMessageInput);
   }
 
-  linkifyElement(chatMessageInput);
-  setCaretPosition(chatMessageInput, caretPosition);
+  var oldHtml = chatMessageInput.innerHTML;
+  var newHtml = linkifyHtml(oldHtml, allowEndOfText);
+
+  if (oldHtml !== newHtml) {
+    chatMessageInput.innerHTML = newHtml;
+    placeCursorAtEnd(chatMessageInput);
+  }
 }
 
-function linkifyElement(root) {
-  var textNodes = [];
-  var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode: function(node) {
-          if (node.parentElement && node.parentElement.closest('a')) {
-              return NodeFilter.FILTER_REJECT;
-          }
+function linkifyHtml(html, allowEndOfText) {
+  var urlPattern = allowEndOfText
+    ? /https?:\/\/(?=[^\s<]*\.)[^\s<]+(?=\s|&nbsp;|<|$)/g
+    : /https?:\/\/(?=[^\s<]*\.)[^\s<]*?(?=\s|&nbsp;)/g;
 
-          return /https?:\/\/[^\s<]+/.test(node.nodeValue)
-              ? NodeFilter.FILTER_ACCEPT
-              : NodeFilter.FILTER_REJECT;
-      }
-  });
+  return html.split(/(<a\b[^>]*>.*?<\/a>)/gi).map(function(part) {
+    if (part.indexOf('<a') === 0) {
+      return part;
+    }
 
-  while (walker.nextNode()) {
-      textNodes.push(walker.currentNode);
-  }
-
-  textNodes.forEach(linkifyTextNode);
+    return part.replace(urlPattern, function(url) {
+      return '<a href="' + url + '" target="_blank">' + url + '</a>';
+    });
+  }).join('');
 }
 
-function linkifyTextNode(textNode) {
-  var text = textNode.nodeValue;
-  var urlRegex = /https?:\/\/[^\s<]+/g;
-  var fragment = document.createDocumentFragment();
-  var lastIndex = 0;
-  var match;
+function openComposerLink(e) {
+  var link = e.target.closest('a');
 
-  while ((match = urlRegex.exec(text)) !== null) {
-      var url = match[0];
-
-      fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-
-      var link = document.createElement('a');
-      link.href = url;
-      link.target = '_blank';
-      link.innerText = url;
-      fragment.appendChild(link);
-
-      lastIndex = match.index + url.length;
+  if (link && chatMessageInput.contains(link)) {
+    e.preventDefault();
+    window.open(link.href, '_blank');
   }
-
-  fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-  textNode.parentNode.replaceChild(fragment, textNode);
 }
 
 function updateExistingLinkHrefs(root) {
@@ -174,8 +170,19 @@ function updateExistingLinkHrefs(root) {
   links.forEach(function(link) {
     var visibleText = link.innerText.trim();
 
-    if (/^https?:\/\/[^\s<]+$/.test(visibleText)) {
+    if (/^https?:\/\/(?=[^\s<]*\.)[^\s<]+$/.test(visibleText)) {
         link.href = visibleText;
     }
   });
+}
+
+function placeCursorAtEnd(element) {
+  var range = document.createRange();
+  var selection = window.getSelection();
+
+  range.selectNodeContents(element);
+  range.collapse(false);
+
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
