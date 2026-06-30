@@ -113,7 +113,7 @@ data.forEach(user => {
 
 //helper functions for links
 
-function refreshComposerLinks(e) {
+function refreshComposerLinks(e) { //converts pasted links instantly but waits for typed out links
   var isDelete = e && e.inputType && e.inputType.indexOf('delete') === 0;
   var isPaste = e && e.inputType === 'insertFromPaste';
   var delay = isPaste || isDelete ? 0 : 500;
@@ -125,7 +125,7 @@ function refreshComposerLinks(e) {
   }, delay);
 }
 
-function linkifyComposer(isDelete, allowEndOfText) {
+function linkifyComposer(isDelete, allowEndOfText) { //convert to link (but deleting characters doesnt change link/href)
   if (!isDelete) {
     updateExistingLinkHrefs(chatMessageInput);
   }
@@ -139,7 +139,7 @@ function linkifyComposer(isDelete, allowEndOfText) {
   }
 }
 
-function linkifyHtml(html, allowEndOfText) {
+function linkifyHtml(html, allowEndOfText) { //make text not in <a> links w/o changing existing <a> tags
   var urlPattern = allowEndOfText
     ? /https?:\/\/(?=[^\s<]*\.)[^\s<]+(?=\s|&nbsp;|<|$)/g
     : /https?:\/\/(?=[^\s<]*\.)[^\s<]*?(?=\s|&nbsp;)/g;
@@ -155,7 +155,7 @@ function linkifyHtml(html, allowEndOfText) {
   }).join('');
 }
 
-function openComposerLink(e) {
+function openComposerLink(e) { //open in new tab
   var link = e.target.closest('a');
 
   if (link && chatMessageInput.contains(link)) {
