@@ -26,6 +26,8 @@ io.on('connection', (socket) => {
     userlist.set(socket.id, username);
     console.log('New client connected - socket ID: ' + socket.id )
     io.emit('status', username + ' joined the chat. Number of connected clients: ' + userlist.size);
+    console.log(Array.from(userlist.values()))
+    io.emit('user-list', Array.from(userlist.values()))
   });
 
   //Todo: UC-02 (AC-02.1): notify all connected clients that a new user joined
@@ -59,6 +61,7 @@ io.on('connection', (socket) => {
     console.log('Client disconnected - socket ID: ' + socket.id);
     //todo: code to broadcast the status
     io.emit('status', username + ' left the chat. Number of connected clients: ' + userlist.size);
+    io.emit('user-list', Array.from(userlist.values()))
   });
 });
 

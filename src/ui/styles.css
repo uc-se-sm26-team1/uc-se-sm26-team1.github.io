@@ -10,5 +10,18 @@
     margin: 4px 2px;
     cursor: pointer;
 }
+.chat-box-user-list{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    
+}
+#user-list{
+    display:table;
+    
+    border: black 1px solid;
+    gap: 5px;
+    padding: 5px;
+}
+.user
 .round{border-radius:8px;}
-#responses{background-color:#ff9800;}
+

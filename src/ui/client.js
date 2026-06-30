@@ -87,3 +87,17 @@ socket.on('status', function(data) {
     socket.emit('joinedUser', username);
   }
   document.getElementById('joinBtn').addEventListener('click', JoinChat)
+
+  //when user joins/leave update list 
+socket.on('user-list', function(data){
+var userlist = document.getElementById('user-list')
+//clear
+userlist.innerHTML = '';
+//iterate through array of users and append
+data.forEach(user => {
+  var list = document.createElement('div');
+  list.innerHTML = user;
+  userlist.appendChild(list);
+});
+
+})

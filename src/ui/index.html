@@ -17,19 +17,29 @@
   </div>
 <div id="chatUI" style="display: none;">
   <div>
+    
     Chat message:
     <div id="chat-message" contenteditable="true" style="width:450px; border:1px solid black; padding: 5px 5px;" ></div>  
     <div class="tool-bar" style="padding: 5px 0px;">
       <button id="link-button">link</button>
       <button id="send-button" class="button round">Send</button>
+      
     </div>
   </div>
   <br>
   <b>System Status</b><br>
   <div id="status" style="width: 625px; height: 75px; overflow-y: scroll;"></div>
-  <b>Chat Responses</b><br>
-  <div id="responses"></div>
+  
+  <div class="chat-box-user-list">
+    <b>Users</b>
+    <b>Chat Responses</b>
+    <div id="user-list"></div>
+    <div id="responses"></div>
+  </div>
+  
+  
   <!--new UI elements to be implemented-->
+  
   <script src="client.js"></script>
 </div>
 </body>
