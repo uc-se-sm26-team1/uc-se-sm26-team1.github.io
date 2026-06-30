@@ -33,17 +33,26 @@ chatMessageInput.addEventListener('keypress', function(e) {
   }
 });
 
+var linkifyTimer;
+chatMessageInput.addEventListener('input', refreshComposerLinks);
+chatMessageInput.addEventListener('click', openComposerLink);
+
 // =============================================================================
 // Use-Case-01: Send Message
 // =============================================================================
 
 function sendMessage() {
-    var message = chatMessageInput.innerText.trim();
-    if (!message) return;   // AC-02.2: empty messages are ignored
-    console.log(`Debug>Chat message: ${message}`); //for UI testing only
-    socket.emit('message', message);// other AC will be implemented
-    chatMessageInput.innerHTML = ''; // AC-01.5: clear input after sending
-    chatMessageInput.focus();
+  var messageText = chatMessageInput.innerText.trim();
+  if (!messageText) return;   // AC-02.2: empty messages are ignored
+
+  clearTimeout(linkifyTimer);
+  linkifyComposer(false);
+
+  var message = chatMessageInput.innerHTML.trim();
+  console.log(`Debug>Chat message: ${message}`); //for UI testing only
+  socket.emit('message', message);// other AC will be implemented
+  chatMessageInput.innerHTML = ''; // AC-01.5: clear input after sending
+  chatMessageInput.focus();
 }
 
 // =============================================================================
@@ -101,3 +110,79 @@ data.forEach(user => {
 });
 
 })
+
+//helper functions for links
+
+function refreshComposerLinks(e) { //converts pasted links instantly but waits for typed out links
+  var isDelete = e && e.inputType && e.inputType.indexOf('delete') === 0;
+  var isPaste = e && e.inputType === 'insertFromPaste';
+  var delay = isPaste || isDelete ? 0 : 500;
+
+  clearTimeout(linkifyTimer);
+
+  linkifyTimer = setTimeout(function() {
+    linkifyComposer(isDelete, isPaste);
+  }, delay);
+}
+
+function linkifyComposer(isDelete, allowEndOfText) { //convert to link (but deleting characters doesnt change link/href)
+  if (!isDelete) {
+    updateExistingLinkHrefs(chatMessageInput);
+  }
+
+  var oldHtml = chatMessageInput.innerHTML;
+  var newHtml = linkifyHtml(oldHtml, allowEndOfText);
+
+  if (oldHtml !== newHtml) {
+    chatMessageInput.innerHTML = newHtml;
+    placeCursorAtEnd(chatMessageInput);
+  }
+}
+
+function linkifyHtml(html, allowEndOfText) { //make text not in <a> links w/o changing existing <a> tags
+  var urlPattern = allowEndOfText
+    ? /https?:\/\/(?=[^\s<]*\.)[^\s<]+(?=\s|&nbsp;|<|$)/g
+    : /https?:\/\/(?=[^\s<]*\.)[^\s<]*?(?=\s|&nbsp;)/g;
+
+  return html.split(/(<a\b[^>]*>.*?<\/a>)/gi).map(function(part) {
+    if (part.indexOf('<a') === 0) {
+      return part;
+    }
+
+    return part.replace(urlPattern, function(url) {
+      return '<a href="' + url + '" target="_blank">' + url + '</a>';
+    });
+  }).join('');
+}
+
+function openComposerLink(e) { //open in new tab
+  var link = e.target.closest('a');
+
+  if (link && chatMessageInput.contains(link)) {
+    e.preventDefault();
+    window.open(link.href, '_blank');
+  }
+}
+
+function updateExistingLinkHrefs(root) {
+  var links = root.querySelectorAll('a');
+
+  links.forEach(function(link) {
+    var visibleText = link.innerText.trim();
+
+    if (/^https?:\/\/(?=[^\s<]*\.)[^\s<]+$/.test(visibleText)) {
+        link.href = visibleText;
+    }
+  });
+}
+
+function placeCursorAtEnd(element) {
+  var range = document.createRange();
+  var selection = window.getSelection();
+
+  range.selectNodeContents(element);
+  range.collapse(false);
+
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
