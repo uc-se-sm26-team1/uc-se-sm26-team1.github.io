@@ -71,8 +71,9 @@ function displayMessage(data){
     var timeStamp = new Date().toLocaleTimeString();
     d.innerHTML ='['+ timeStamp +'] ' + data;
     document.getElementById('responses').appendChild(d);
+    //AC-02.3 UI: auto scroll to the latest message
+    document.getElementById('responses').scrollTop = document.getElementById('responses').scrollHeight;
 }
-// AC-02.3 (UI): auto-scroll to the latest message
 
 //AC-02.1: display system status events join/leave in the status area
 socket.on('status', function(data) {
