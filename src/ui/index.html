@@ -38,7 +38,15 @@
   </div>
   
   
-  <!--new UI elements to be implemented-->
+  <!-- F1.5: Private (direct) messaging -->
+  <div class="private-chat-box" style="margin-top: 15px;">
+    <b>Private Message</b><br>
+    <input type="text" id="private-to" placeholder="Recipient username" style="width: 150px;">
+    <div id="private-message" contenteditable="true"
+         style="width:450px; border:1px solid black; padding: 5px 5px; display:inline-block; vertical-align:middle;"></div>
+    <button id="private-send-button" class="button round">Send Private</button>
+    <div id="private-responses" style="width: 625px; height: 100px; overflow-y: scroll; border:1px solid #ccc; margin-top:5px;"></div>
+  </div>
   
   <script src="client.js"></script>
 </div>

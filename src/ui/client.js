@@ -187,3 +187,53 @@ function placeCursorAtEnd(element) {
   selection.removeAllRanges();
   selection.addRange(range);
 }
+
+//Use Case F1.5
+var privateToInput   = document.getElementById('private-to');
+var privateMsgInput  = document.getElementById('private-message');
+var privateSendBtn   = document.getElementById('private-send-button');
+var privateResponses = document.getElementById('private-responses');
+
+if (!privateSendBtn || !privateToInput || !privateMsgInput || !privateResponses) {
+  console.log('Error getting private chat elements');
+}
+
+privateSendBtn.addEventListener('click', sendPrivateMessage);
+
+privateMsgInput.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendPrivateMessage();
+  }
+});
+
+function sendPrivateMessage() {
+  var to = privateToInput.value.trim();
+  var text = privateMsgInput.innerText.trim();
+  if (!to || !text) return;
+
+  console.log(`Debug>Private message to ${to}: ${text}`);
+  socket.emit('private-message', { to: to, text: text });
+
+  privateMsgInput.innerHTML = '';
+  privateMsgInput.focus();
+}
+
+socket.on('private-message', function(data) {
+  var d = document.createElement('div');
+  var timeStamp = new Date(data.timestamp).toLocaleTimeString();
+  var direction = (data.from === document.getElementById('username').value)
+    ? 'to ' + data.to
+    : 'from ' + data.from;
+  d.innerHTML = '[' + timeStamp + '] (' + direction + '): ' + data.text;
+  privateResponses.appendChild(d);
+  privateResponses.scrollTop = privateResponses.scrollHeight;
+});
+
+socket.on('private-message-error', function(errMsg) {
+  var d = document.createElement('div');
+  var timeStamp = new Date().toLocaleTimeString();
+  d.innerHTML = '[' + timeStamp + '] Error: ' + errMsg;
+  privateResponses.appendChild(d);
+  privateResponses.scrollTop = privateResponses.scrollHeight;
+});

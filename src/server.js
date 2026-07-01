@@ -50,6 +50,30 @@ io.on('connection', (socket) => {
     console.log(`DEBUG>"${sender}: sent ${data}"`);
     io.emit('message', sender + ' says: ' + data.trim());
   });
+
+  socket.on('private-message', (data) => {
+    const sender = userlist.get(socket.id);
+    if(!sender) return;
+    if(!data || typeof data.text !== 'string' || data.text.trim() === ''|| !data.to) return;
+
+    const payload = {
+      from: sender,
+      to: data.to,
+      text: data.text.trim(),
+      timestamp: new Date().toISOString()
+    };
+
+    const targetSocketId = [...userlist.entries()]
+      .find(([id, username]) => username === data.to)?.[0];
+
+    if (targetSocketId) {
+      console.log(`DEBUG> private: ${sender} -> ${data.to}: ${payload.text}`);
+      io.to(targetSocketId).emit('private-message', payload);
+      socket.emit('private-message', payload);
+    } else {
+      socket.emit('private-message-error', `${data.to} is not online.`);
+    }
+  });
   // ---------------------------------------------------------------------------
   // Use-Case-02: Receive message — disconnect notification
   //
