@@ -12,14 +12,16 @@
 }
 .chat-box-user-list {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 #user-list {
-  display: table;
+  /* display: table; */
 
   border: black 1px solid;
-  gap: 5px;
+  /* gap: 5px; */
   padding: 5px;
+  min-height: 50px;
 }
 .user .round {
   border-radius: 8px;
@@ -71,5 +73,17 @@
   border: 1px solid #ccc;
   background-color: white;
   padding: 8px;
+  box-sizing: border-box;
+}
+
+.private-chat-panel {
+  background-color: #fff7e6;
+  border-color: #f2994a;
+}
+
+.recipient-input {
+  width: 100%;
+  padding: 6px;
+  margin: 5px 0 10px 0;
   box-sizing: border-box;
 }

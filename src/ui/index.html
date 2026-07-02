@@ -49,46 +49,42 @@
 
       <div class="chat-box-user-list">
         <b>Users</b>
-        <b>Chat Responses</b>
+        <!-- <b>Chat Responses</b> -->
         <div id="user-list"></div>
-        <div id="responses"></div>
+        <!-- <div id="responses"></div> -->
       </div>
 
       <!-- F1.5: Private (direct) messaging -->
-      <div class="private-chat-box" style="margin-top: 15px">
-        <h2>Private Chat</h2>
-        <p>Messages sent here are only delivered to the selected user.</p>
-        <b>Private Message</b><br />
-        <input
-          type="text"
-          id="private-to"
-          placeholder="Recipient username"
-          style="width: 150px"
-        />
-        <div
-          id="private-message"
-          contenteditable="true"
-          style="
-            width: 450px;
-            border: 1px solid black;
-            padding: 5px 5px;
-            display: inline-block;
-            vertical-align: middle;
-          "
-        ></div>
-        <button id="private-send-button" class="button round">
-          Send Private
-        </button>
-        <div
-          id="private-responses"
-          style="
-            width: 625px;
-            height: 100px;
-            overflow-y: scroll;
-            border: 1px solid #ccc;
-            margin-top: 5px;
-          "
-        ></div>
+      <!-- Private Chat Panel -->
+      <div class="chat-layout">
+        <section class="chat-panel private-chat-panel">
+          <h2>Private Chat</h2>
+          <p class="chat-description">
+            Messages sent here are only delivered to the selected user.
+          </p>
+          <label for="private-to"><b>Send To:</b></label>
+          <input
+            type="text"
+            id="private-to"
+            placeholder="Recipient username"
+            class="recipient-input"
+          />
+          <label for="private-message"><b>Private Message:</b></label>
+          <div
+            id="private-message"
+            class="message-input"
+            contenteditable="true"
+          ></div>
+          <button id="private-send-button" class="button round">
+            Send Private
+          </button>
+
+          <h3>Private Chat Responses</h3>
+          <div
+            id="private-responses"
+            class="message-display private-messages"
+          ></div>
+        </section>
       </div>
 
       <script src="client.js"></script>
