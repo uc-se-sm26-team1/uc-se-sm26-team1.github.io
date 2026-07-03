@@ -361,11 +361,12 @@ socket.on("private-message-error", function (errMsg) {
   privateResponses.scrollTop = privateResponses.scrollHeight;
 });
 
-// (F1.8) Typing Status Indicator - Public chat
+// (F1.8) Typing Status Indicator - Public and Private Chat
 var publicTypingStatus = document.getElementById("public-typing-status");
 var privateTypingStatus = document.getElementById("private-typing-status");
 
 var publicTypingTimer;
+var privateTypingTimer;
 
 // Public chat typing
 chatMessageInput.addEventListener("input", function () {
@@ -378,14 +379,44 @@ chatMessageInput.addEventListener("input", function () {
 });
 
 socket.on("public-typing", function (username) {
-  publicTypingStatus.innerText = username + " is typing in public chat...";
+  publicTypingStatus.innerText = username + " is typing...";
 });
 
 socket.on("public-stop-typing", function (username) {
   if (
     publicTypingStatus.innerText ===
-    username + " is typing in public chat..."
+    username + " is typing..."
   ) {
     publicTypingStatus.innerText = "";
   }
+});
+
+// Private chat typing
+privateMsgInput.addEventListener("input", function () {
+  var to = privateToInput.value.trim();
+
+  if (!to) {
+    return;
+  }
+
+  socket.emit("private-typing", { to: to });
+
+  clearTimeout(privateTypingTimer);
+  privateTypingTimer = setTimeout(function () {
+    socket.emit("private-stop-typing", { to: to });
+  }, 1000);
+
+  socket.on("private-typing", function (username) {
+    privateTypingStatus.innerText =
+      username + " is typing...";
+  });
+
+  socket.on("private-stop-typing", function (username) {
+    if (
+      privateTypingStatus.innerText ===
+      username + " is typing..."
+    ) {
+      privateTypingStatus.innerText = "";
+    }
+  });
 });

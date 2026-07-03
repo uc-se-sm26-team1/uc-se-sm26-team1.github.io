@@ -86,7 +86,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // (F1.8) Typing Status Indicator - Public chat
+  // (F1.8) Typing Status Indicator - Public and Private Chat
   // Public typing: show typing status to everyone except the person typing
   socket.on("public-typing", () => {
     const username = userlist.get(socket.id);
@@ -100,6 +100,41 @@ io.on("connection", (socket) => {
     if (!username) return;
 
     socket.broadcast.emit("public-stop-typing", username);
+  });
+
+  // Private typing: show typing status to the selected recipient
+  socket.on("private-typing", (data) => {
+    const sender = userlist.get(socket.id);
+    if (!sender) {
+      return;
+    }
+    if (!data || !data.to) {
+      return;
+    }
+
+    const targetSocketId = [...userlist.entries()].find(
+      ([id, username]) => username === data.to)?.[0];
+
+    if (targetSocketId) {
+      io.to(targetSocketId).emit("private-typing", sender);
+    }
+
+    socket.on("private-stop-typing", (data) => {
+      const sender = userlist.get(socket.id);
+      if (!sender) {
+        return;
+      }
+      if (!data || !data.to) {
+        return;
+      }
+
+      const targetSocketId = [...userlist.entries()].find(
+        ([id, username]) => username === data.to)?.[0];
+
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("private-stop-typing", sender);
+      }
+    });
   });
 
   // ---------------------------------------------------------------------------
