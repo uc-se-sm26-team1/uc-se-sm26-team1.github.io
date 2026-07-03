@@ -19,7 +19,10 @@ if(!sendBtnElm) {
     console.log("Error in getting 'send-button' button");
 }
 // AC-01.2 (UI): Send button click triggers sendMessage()
+
 sendBtnElm.addEventListener('click', sendMessage);
+var linkBtnElm = document.getElementById('link-button');
+linkBtnElm.addEventListener('click', openLinkPopup);
 
 var chatMessageInput = document.getElementById('chat-message');
 if(!chatMessageInput) {
@@ -34,8 +37,15 @@ chatMessageInput.addEventListener('keypress', function(e) {
 });
 
 var linkifyTimer;
-chatMessageInput.addEventListener('input', refreshComposerLinks);
-chatMessageInput.addEventListener('click', openComposerLink);
+var savedLinkRange = null;
+
+var linkPopup = document.getElementById('link-popup');
+var linkTextInput = document.getElementById('link-text-input');
+var linkAddressInput = document.getElementById('link-address-input');
+var cancelLinkButton = document.getElementById('cancel-link-button');
+var insertLinkButton = document.getElementById('insert-link-button');
+
+setupLinkTools();
 
 // =============================================================================
 // Use-Case-01: Send Message
@@ -176,6 +186,82 @@ function updateExistingLinkHrefs(root) {
   });
 }
 
+function openLinkPopup(e) {
+  e.preventDefault();
+  saveComposerSelection();
+
+  var selectedText = savedLinkRange ? savedLinkRange.toString() : '';
+  linkTextInput.value = selectedText;
+  linkAddressInput.value = '';
+  updateInsertLinkButton();
+  linkPopup.showModal();
+
+  if (selectedText) {
+    linkAddressInput.focus();
+  } else {
+    linkTextInput.focus();
+  }
+}
+
+function closeLinkPopup(e) {
+  e.preventDefault();
+  linkPopup.close();
+}
+
+function insertLinkFromPopup(e) {
+  e.preventDefault();
+
+  var href = linkAddressInput.value.trim();
+  var text = linkTextInput.value.trim() || href;
+
+  if (!href) return;
+
+  var link = document.createElement('a');
+  link.href = href;
+  link.target = '_blank';
+  link.innerText = text;
+
+  var range = getLinkInsertRange();
+  range.deleteContents();
+  range.insertNode(link);
+  range.setStartAfter(link);
+  range.collapse(true);
+
+  var selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  savedLinkRange = range.cloneRange();
+
+  linkPopup.close();
+}
+
+function getLinkInsertRange() {
+  if (savedLinkRange && chatMessageInput.contains(savedLinkRange.commonAncestorContainer)) {
+    return savedLinkRange;
+  }
+
+  var range = document.createRange();
+  range.selectNodeContents(chatMessageInput);
+  range.collapse(false);
+  return range;
+}
+
+function saveComposerSelection() {
+  var selection = window.getSelection();
+
+  if (!selection.rangeCount) return;
+
+  var range = selection.getRangeAt(0);
+
+  if (chatMessageInput.contains(range.commonAncestorContainer)) {
+    savedLinkRange = range.cloneRange();
+  }
+}
+
+function updateInsertLinkButton() {
+  insertLinkButton.disabled = linkAddressInput.value.trim() === '';
+}
+
 function placeCursorAtEnd(element) {
   var range = document.createRange();
   var selection = window.getSelection();
@@ -185,4 +271,18 @@ function placeCursorAtEnd(element) {
 
   selection.removeAllRanges();
   selection.addRange(range);
+}
+
+function setupLinkTools() {
+  chatMessageInput.addEventListener('input', refreshComposerLinks);
+  chatMessageInput.addEventListener('click', openComposerLink);
+  chatMessageInput.addEventListener('keyup', saveComposerSelection);
+  chatMessageInput.addEventListener('mouseup', saveComposerSelection);
+
+  cancelLinkButton.addEventListener('click', closeLinkPopup);
+  insertLinkButton.addEventListener('click', insertLinkFromPopup);
+  linkAddressInput.addEventListener('input', updateInsertLinkButton);
+  linkPopup.addEventListener('close', function() {
+    chatMessageInput.focus();
+  });
 }
