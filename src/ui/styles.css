@@ -87,3 +87,11 @@
   margin: 5px 0 10px 0;
   box-sizing: border-box;
 }
+
+.typing-status {
+  min-height: 20px;
+  font-size: 13px;
+  font-style: italic;
+  color: #555;
+  margin-top: 5px;
+}

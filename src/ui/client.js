@@ -21,9 +21,9 @@ if (!sendBtnElm) {
 }
 // AC-01.2 (UI): Send button click triggers sendMessage()
 
-sendBtnElm.addEventListener('click', sendMessage);
-var linkBtnElm = document.getElementById('link-button');
-linkBtnElm.addEventListener('click', openLinkPopup);
+sendBtnElm.addEventListener("click", sendMessage);
+var linkBtnElm = document.getElementById("link-button");
+linkBtnElm.addEventListener("click", openLinkPopup);
 
 var chatMessageInput = document.getElementById("chat-message");
 if (!chatMessageInput) {
@@ -40,11 +40,11 @@ chatMessageInput.addEventListener("keydown", function (e) {
 var linkifyTimer;
 var savedLinkRange = null;
 
-var linkPopup = document.getElementById('link-popup');
-var linkTextInput = document.getElementById('link-text-input');
-var linkAddressInput = document.getElementById('link-address-input');
-var cancelLinkButton = document.getElementById('cancel-link-button');
-var insertLinkButton = document.getElementById('insert-link-button');
+var linkPopup = document.getElementById("link-popup");
+var linkTextInput = document.getElementById("link-text-input");
+var linkAddressInput = document.getElementById("link-address-input");
+var cancelLinkButton = document.getElementById("cancel-link-button");
+var insertLinkButton = document.getElementById("insert-link-button");
 
 setupLinkTools();
 
@@ -62,6 +62,7 @@ function sendMessage() {
   var message = chatMessageInput.innerHTML.trim();
   console.log(`Debug>Chat message: ${message}`); //for UI testing only
   socket.emit("message", message); // other AC will be implemented
+  socket.emit("public-stop-typing"); // F1.8: stop typing what message is sent
   chatMessageInput.innerHTML = ""; // AC-01.5: clear input after sending
   chatMessageInput.focus();
 }
@@ -198,9 +199,9 @@ function openLinkPopup(e) {
   e.preventDefault();
   saveComposerSelection();
 
-  var selectedText = savedLinkRange ? savedLinkRange.toString() : '';
+  var selectedText = savedLinkRange ? savedLinkRange.toString() : "";
   linkTextInput.value = selectedText;
-  linkAddressInput.value = '';
+  linkAddressInput.value = "";
   updateInsertLinkButton();
   linkPopup.showModal();
 
@@ -224,9 +225,9 @@ function insertLinkFromPopup(e) {
 
   if (!isValidLinkAddress(href)) return;
 
-  var link = document.createElement('a');
+  var link = document.createElement("a");
   link.href = href;
-  link.target = '_blank';
+  link.target = "_blank";
   link.innerText = text;
 
   var range = getLinkInsertRange();
@@ -244,7 +245,10 @@ function insertLinkFromPopup(e) {
 }
 
 function getLinkInsertRange() {
-  if (savedLinkRange && chatMessageInput.contains(savedLinkRange.commonAncestorContainer)) {
+  if (
+    savedLinkRange &&
+    chatMessageInput.contains(savedLinkRange.commonAncestorContainer)
+  ) {
     return savedLinkRange;
   }
 
@@ -267,7 +271,9 @@ function saveComposerSelection() {
 }
 
 function updateInsertLinkButton() {
-  insertLinkButton.disabled = !isValidLinkAddress(linkAddressInput.value.trim());
+  insertLinkButton.disabled = !isValidLinkAddress(
+    linkAddressInput.value.trim(),
+  );
 }
 
 function isValidLinkAddress(address) {
@@ -286,15 +292,15 @@ function placeCursorAtEnd(element) {
 }
 
 function setupLinkTools() {
-  chatMessageInput.addEventListener('input', refreshComposerLinks);
-  chatMessageInput.addEventListener('click', openComposerLink);
-  chatMessageInput.addEventListener('keyup', saveComposerSelection);
-  chatMessageInput.addEventListener('mouseup', saveComposerSelection);
+  chatMessageInput.addEventListener("input", refreshComposerLinks);
+  chatMessageInput.addEventListener("click", openComposerLink);
+  chatMessageInput.addEventListener("keyup", saveComposerSelection);
+  chatMessageInput.addEventListener("mouseup", saveComposerSelection);
 
-  cancelLinkButton.addEventListener('click', closeLinkPopup);
-  insertLinkButton.addEventListener('click', insertLinkFromPopup);
-  linkAddressInput.addEventListener('input', updateInsertLinkButton);
-  linkPopup.addEventListener('close', function() {
+  cancelLinkButton.addEventListener("click", closeLinkPopup);
+  insertLinkButton.addEventListener("click", insertLinkFromPopup);
+  linkAddressInput.addEventListener("input", updateInsertLinkButton);
+  linkPopup.addEventListener("close", function () {
     chatMessageInput.focus();
   });
 }
@@ -353,4 +359,64 @@ socket.on("private-message-error", function (errMsg) {
   d.innerHTML = "[" + timeStamp + "] Error: " + errMsg;
   privateResponses.appendChild(d);
   privateResponses.scrollTop = privateResponses.scrollHeight;
+});
+
+// (F1.8) Typing Status Indicator - Public and Private Chat
+var publicTypingStatus = document.getElementById("public-typing-status");
+var privateTypingStatus = document.getElementById("private-typing-status");
+
+var publicTypingTimer;
+var privateTypingTimer;
+
+// Public chat typing
+chatMessageInput.addEventListener("input", function () {
+  socket.emit("public-typing");
+
+  clearTimeout(publicTypingTimer);
+  publicTypingTimer = setTimeout(function () {
+    socket.emit("public-stop-typing");
+  }, 1000);
+});
+
+socket.on("public-typing", function (username) {
+  publicTypingStatus.innerText = username + " is typing...";
+});
+
+socket.on("public-stop-typing", function (username) {
+  if (
+    publicTypingStatus.innerText ===
+    username + " is typing..."
+  ) {
+    publicTypingStatus.innerText = "";
+  }
+});
+
+// Private chat typing
+privateMsgInput.addEventListener("input", function () {
+  var to = privateToInput.value.trim();
+
+  if (!to) {
+    return;
+  }
+
+  socket.emit("private-typing", { to: to });
+
+  clearTimeout(privateTypingTimer);
+  privateTypingTimer = setTimeout(function () {
+    socket.emit("private-stop-typing", { to: to });
+  }, 1000);
+
+  socket.on("private-typing", function (username) {
+    privateTypingStatus.innerText =
+      username + " is typing...";
+  });
+
+  socket.on("private-stop-typing", function (username) {
+    if (
+      privateTypingStatus.innerText ===
+      username + " is typing..."
+    ) {
+      privateTypingStatus.innerText = "";
+    }
+  });
 });
