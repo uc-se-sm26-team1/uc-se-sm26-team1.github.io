@@ -214,7 +214,7 @@ function insertLinkFromPopup(e) {
   var href = linkAddressInput.value.trim();
   var text = linkTextInput.value.trim() || href;
 
-  if (!href) return;
+  if (!isValidLinkAddress(href)) return;
 
   var link = document.createElement('a');
   link.href = href;
@@ -259,7 +259,11 @@ function saveComposerSelection() {
 }
 
 function updateInsertLinkButton() {
-  insertLinkButton.disabled = linkAddressInput.value.trim() === '';
+  insertLinkButton.disabled = !isValidLinkAddress(linkAddressInput.value.trim());
+}
+
+function isValidLinkAddress(address) {
+  return /^https?:\/\//.test(address);
 }
 
 function placeCursorAtEnd(element) {
