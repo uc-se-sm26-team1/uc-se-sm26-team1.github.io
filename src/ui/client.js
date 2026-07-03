@@ -20,14 +20,17 @@ if (!sendBtnElm) {
   console.log("Error in getting 'send-button' button");
 }
 // AC-01.2 (UI): Send button click triggers sendMessage()
-sendBtnElm.addEventListener("click", sendMessage);
+
+sendBtnElm.addEventListener('click', sendMessage);
+var linkBtnElm = document.getElementById('link-button');
+linkBtnElm.addEventListener('click', openLinkPopup);
 
 var chatMessageInput = document.getElementById("chat-message");
 if (!chatMessageInput) {
   console.log('Error in getting "chat-message" input');
 }
 // AC-01.2 (UI): pressing Enter also triggers sendMessage()
-chatMessageInput.addEventListener("keypress", function (e) {
+chatMessageInput.addEventListener("keydown", function (e) {
   if (e.key === "Enter") {
     e.preventDefault();
     sendMessage();
@@ -35,24 +38,31 @@ chatMessageInput.addEventListener("keypress", function (e) {
 });
 
 var linkifyTimer;
-chatMessageInput.addEventListener("input", refreshComposerLinks);
-chatMessageInput.addEventListener("click", openComposerLink);
+var savedLinkRange = null;
+
+var linkPopup = document.getElementById('link-popup');
+var linkTextInput = document.getElementById('link-text-input');
+var linkAddressInput = document.getElementById('link-address-input');
+var cancelLinkButton = document.getElementById('cancel-link-button');
+var insertLinkButton = document.getElementById('insert-link-button');
+
+setupLinkTools();
 
 // =============================================================================
 // Use-Case-01: Send Message
 // =============================================================================
 
 function sendMessage() {
-  var messageText = chatMessageInput.value.trim();
+  var messageText = chatMessageInput.innerText.trim();
   if (!messageText) return; // AC-02.2: empty messages are ignored
 
   clearTimeout(linkifyTimer);
   linkifyComposer(false);
 
-  var message = chatMessageInput.value.trim();
+  var message = chatMessageInput.innerHTML.trim();
   console.log(`Debug>Chat message: ${message}`); //for UI testing only
   socket.emit("message", message); // other AC will be implemented
-  chatMessageInput.value = ""; // AC-01.5: clear input after sending
+  chatMessageInput.innerHTML = ""; // AC-01.5: clear input after sending
   chatMessageInput.focus();
 }
 
@@ -184,6 +194,86 @@ function updateExistingLinkHrefs(root) {
   });
 }
 
+function openLinkPopup(e) {
+  e.preventDefault();
+  saveComposerSelection();
+
+  var selectedText = savedLinkRange ? savedLinkRange.toString() : '';
+  linkTextInput.value = selectedText;
+  linkAddressInput.value = '';
+  updateInsertLinkButton();
+  linkPopup.showModal();
+
+  if (selectedText) {
+    linkAddressInput.focus();
+  } else {
+    linkTextInput.focus();
+  }
+}
+
+function closeLinkPopup(e) {
+  e.preventDefault();
+  linkPopup.close();
+}
+
+function insertLinkFromPopup(e) {
+  e.preventDefault();
+
+  var href = linkAddressInput.value.trim();
+  var text = linkTextInput.value.trim() || href;
+
+  if (!isValidLinkAddress(href)) return;
+
+  var link = document.createElement('a');
+  link.href = href;
+  link.target = '_blank';
+  link.innerText = text;
+
+  var range = getLinkInsertRange();
+  range.deleteContents();
+  range.insertNode(link);
+  range.setStartAfter(link);
+  range.collapse(true);
+
+  var selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  savedLinkRange = range.cloneRange();
+
+  linkPopup.close();
+}
+
+function getLinkInsertRange() {
+  if (savedLinkRange && chatMessageInput.contains(savedLinkRange.commonAncestorContainer)) {
+    return savedLinkRange;
+  }
+
+  var range = document.createRange();
+  range.selectNodeContents(chatMessageInput);
+  range.collapse(false);
+  return range;
+}
+
+function saveComposerSelection() {
+  var selection = window.getSelection();
+
+  if (!selection.rangeCount) return;
+
+  var range = selection.getRangeAt(0);
+
+  if (chatMessageInput.contains(range.commonAncestorContainer)) {
+    savedLinkRange = range.cloneRange();
+  }
+}
+
+function updateInsertLinkButton() {
+  insertLinkButton.disabled = !isValidLinkAddress(linkAddressInput.value.trim());
+}
+
+function isValidLinkAddress(address) {
+  return /^https?:\/\//.test(address);
+}
+
 function placeCursorAtEnd(element) {
   var range = document.createRange();
   var selection = window.getSelection();
@@ -193,6 +283,20 @@ function placeCursorAtEnd(element) {
 
   selection.removeAllRanges();
   selection.addRange(range);
+}
+
+function setupLinkTools() {
+  chatMessageInput.addEventListener('input', refreshComposerLinks);
+  chatMessageInput.addEventListener('click', openComposerLink);
+  chatMessageInput.addEventListener('keyup', saveComposerSelection);
+  chatMessageInput.addEventListener('mouseup', saveComposerSelection);
+
+  cancelLinkButton.addEventListener('click', closeLinkPopup);
+  insertLinkButton.addEventListener('click', insertLinkFromPopup);
+  linkAddressInput.addEventListener('input', updateInsertLinkButton);
+  linkPopup.addEventListener('close', function() {
+    chatMessageInput.focus();
+  });
 }
 
 //Use Case F1.5
