@@ -30,7 +30,7 @@ if (!chatMessageInput) {
   console.log('Error in getting "chat-message" input');
 }
 // AC-01.2 (UI): pressing Enter also triggers sendMessage()
-chatMessageInput.addEventListener("keypress", function (e) {
+chatMessageInput.addEventListener("keydown", function (e) {
   if (e.key === "Enter") {
     e.preventDefault();
     sendMessage();
@@ -53,16 +53,16 @@ setupLinkTools();
 // =============================================================================
 
 function sendMessage() {
-  var messageText = chatMessageInput.value.trim();
+  var messageText = chatMessageInput.innerText.trim();
   if (!messageText) return; // AC-02.2: empty messages are ignored
 
   clearTimeout(linkifyTimer);
   linkifyComposer(false);
 
-  var message = chatMessageInput.value.trim();
+  var message = chatMessageInput.innerHTML.trim();
   console.log(`Debug>Chat message: ${message}`); //for UI testing only
   socket.emit("message", message); // other AC will be implemented
-  chatMessageInput.value = ""; // AC-01.5: clear input after sending
+  chatMessageInput.innerHTML = ""; // AC-01.5: clear input after sending
   chatMessageInput.focus();
 }
 

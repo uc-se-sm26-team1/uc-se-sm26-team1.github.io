@@ -25,11 +25,11 @@
           </p>
 
           <label for="chat-message"><b>Public Message:</b></label>
-          <textarea
+          <div
             id="chat-message"
             class="message-input"
-            placeholder="Type a public message..."
-          ></textarea>
+            contenteditable="true"
+          ></div>
 
           <div class="tool-bar">
             <button id="link-button">link</button>
@@ -75,6 +75,7 @@
             class="message-input"
             contenteditable="true"
           ></div>
+          <button id="private-link-button">link</button>
           <button id="private-send-button" class="button round">
             Send Private
           </button>
