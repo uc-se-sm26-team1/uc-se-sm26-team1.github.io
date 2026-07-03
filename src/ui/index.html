@@ -36,6 +36,8 @@
             <button id="send-button" class="button round">Send Public</button>
           </div>
 
+          <div id="public-typing-status" class="typing-status"></div>
+
           <h3>Public Chat Responses</h3>
           <div id="responses" class="message-display public-messages"></div>
         </section>
@@ -80,6 +82,8 @@
             Send Private
           </button>
 
+          <div id="private-typing-status" class="typing-status"></div>
+
           <h3>Private Chat Responses</h3>
           <div
             id="private-responses"
@@ -87,16 +91,24 @@
           ></div>
         </section>
       </div>
-  
-  <dialog id="link-popup">
-    <b>Insert link</b><br>
-    Text to display<br>
-    <input id="link-text-input" type="text" placeholder="Text to display"><br>
-    Address<br>
-    <input id="link-address-input" type="text" placeholder="Link to an existing file or web page"><br>
-    <button id="cancel-link-button">Cancel</button>
-    <button id="insert-link-button" disabled>Insert</button>
-  </dialog>
+
+      <dialog id="link-popup">
+        <b>Insert link</b><br />
+        Text to display<br />
+        <input
+          id="link-text-input"
+          type="text"
+          placeholder="Text to display"
+        /><br />
+        Address<br />
+        <input
+          id="link-address-input"
+          type="text"
+          placeholder="Link to an existing file or web page"
+        /><br />
+        <button id="cancel-link-button">Cancel</button>
+        <button id="insert-link-button" disabled>Insert</button>
+      </dialog>
 
       <script src="client.js"></script>
     </div>
